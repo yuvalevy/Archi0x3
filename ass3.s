@@ -9,47 +9,82 @@ sys_exit:       equ   1
 section .data
         ten: dd 10
 section .bss
-length:     resb 	1
-width:      resb 	1
-t:          resb 	1
-k:          resb 	1
+
+; parameters:
+length:     resb    4
+width:      resb    4
+k:          resb    4
+t:          resb    4
+state:      resb    4   ; the organisms state
 
 section .text
+    align 16
+   ; extern malloc 
 
 %macro get_number 2 ; gets a number from the stack
     
-        mov ebx, [ebp + 4*%2]       ; place in the stack
-        push ebx
-        mov ebx, make_number
-        call ebx
-        add esp ,4      ;;;;;;;;;;;;;;;;;;;;PROBLEMMM
-        mov dword [%1], eax         ; the label to update
+    mov ebx, [ebp + 4*%2]       ; place in the stack
+    push ebx
+    mov ebx, make_number
+    call ebx
+    add esp ,4
+    mov dword [%1], eax         ; the label to update
     
 %endmacro
 
+%macro myMalloc 1			; returned address in eax
+	
+    push ebp				; open malloc's frame
+    mov ebp, esp
+    sub esp, 4				; Leave space for local var on stack
+    pushad					;allocate space for new node
+
+    push %1
+    ;call malloc
+    add esp, 4
+
+    mov [ebp-4], eax                ; Save returned value...
+    popad                           ; Restore caller state (registers)
+    mov eax, [ebp-4]                 ; place returned value where caller can see it
+    
+    add     esp, 4          ; Restore caller state
+    pop ebp					; close malloc's frame
+%endmacro
 
 
 _start:
         enter 0, 0
 
-        ;;; initialize parameters ;;;
-        
         mov eax, [ebp+4]        ; argc
         
-        ;; check if -d exist
-        ;; check if argc < 5... error in parameters
+        cmp eax, 7
+        je read_params          ; if -d doesn't exist
         
+        cmp eax, 8
+        je deal_with_d          ; if -d exist
+        
+        ; now argc < 5 || argc > 6,,,, error here
+        
+        ;jmp finito
+        
+deal_with_d:
+        
+read_params:                       ;;; initialize parameters ;;;
         mov eax, [ebp + 4*3]       ; "filename"
         mov eax, [eax]
         
         ;; open file and initialize state
          
-start_l:        get_number length, 4       ; length
-start_w:        get_number width,  5       ; width
-start_t:        get_number t,      6       ; t
-start_k:        get_number k,      7       ; k
-end:
+        get_number length, 4       ; length
+        get_number width,  5       ; width
+        get_number t,      6       ; t
+        get_number k,      7       ; k
+       
+        mov eax, 0
+        mov eax, [width]
+        mul dword [length]
         
+        myMalloc eax
         
         xor ebx, ebx            ; scheduler is co-routine 0
         mov edx, scheduler
@@ -65,7 +100,7 @@ end:
         call start_co           ; start co-routines
 
 
-        ;; exit
+finito:        ;; exit
         mov eax, sys_exit
         xor ebx, ebx
         int 80h
