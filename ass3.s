@@ -15,7 +15,7 @@ length:     resb    4
 width:      resb    4
 k:          resb    4
 t:          resb    4
-state:      resb    4   ; the organisms state
+state:      resb    102*102   ; the organisms state
 
 section .text
     align 16
@@ -51,7 +51,7 @@ section .text
     pop ebp					; close malloc's frame
 %endmacro
 
-
+;main:
 _start:
         enter 0, 0
 
@@ -86,7 +86,7 @@ read_params:                       ;;; initialize parameters ;;;
         
         myMalloc eax
         
-        xor ebx, ebx            ; scheduler is co-routine 0
+        xor ebx, ebx            ; scheduler is co-routine 0 
         mov edx, scheduler
         mov ecx, [ebp + 4]      ; ecx = argc
         call init_co            ; initialize scheduler state
@@ -94,8 +94,10 @@ read_params:                       ;;; initialize parameters ;;;
         inc ebx                 ; printer i co-routine 1
         mov edx, printer
         call init_co            ; initialize printer state
-
-
+ 
+ ;initialize all cell's co-routines
+ ; create a func for the cell (put in edx)
+ 
         xor ebx, ebx            ; starting co-routine = scheduler
         call start_co           ; start co-routines
 
@@ -131,3 +133,8 @@ make_number_end:
         mov     esp, ebp        ; Function exit code
         pop     ebp
         ret
+
+
+
+
+

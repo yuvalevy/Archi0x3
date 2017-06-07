@@ -16,7 +16,7 @@ section .text
 printer:
         mov eax, sys_write
         mov ebx, stdout
-        mov ecx, hello
+        mov ecx, hello          ;pointer to string
         mov edx, 6
         int 80h
 
