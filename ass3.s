@@ -5,6 +5,11 @@ extern scheduler, printer
 
 ;; /usr/include/asm/unistd_32.h
 sys_exit:       equ   1
+sys_open:       equ   5
+sys_read:       equ   3
+read_only:      equ   0
+permissions:    equ   777
+
 
 section .data
         ten: dd 10
@@ -13,13 +18,16 @@ section .bss
 ; parameters:
 length:     resb    4
 width:      resb    4
+matrix_size:resb    4
 k:          resb    4
 t:          resb    4
-state:      resb    102*102   ; the organisms state
+state_:      resb    102*102   ; the organisms state
+filename_ptr:resb   4   ; file name pointer
+tmp_chr:    resb    1
 
 section .text
     align 16
-   ; extern malloc 
+    extern malloc 
 
 %macro get_number 1 ; gets a number from the stack
             
@@ -44,10 +52,10 @@ section .text
     push ebp				; open malloc's frame
     mov ebp, esp
     sub esp, 4				; Leave space for local var on stack
-    pushad					;allocate space for new node
+    pushad				;allocate space for new node
 
     push %1
-    ;call malloc
+    call malloc
     add esp, 4
 
     mov [ebp-4], eax                ; Save returned value...
@@ -79,20 +87,78 @@ deal_with_d:
 read_params:                       ;;; initialize parameters ;;;
         mov ecx, [ebp + 4*3]       ; char** argv
         add ecx, 4
-        mov ebx, [ecx]             ; filename
-        
-        ;; open file and initialize state
+        mov ebx, [ecx]      ; filename
 
+        push ebx                   ; save filename
+        
+        ; read all other parameters
         get_number length       ; length
         get_number width        ; width
         get_number t            ; t
         get_number k            ; k
-end_read:  
+        
+              
         mov eax, 0
         mov eax, [width]
-        mul dword [length]
+        mul dword [length]      ; eax hold the 'state' actual size
+        mov [matrix_size], eax
+end_read:
+
+        ;mov eax, state_
+        ;mov byte [eax], 1
+        ;inc eax
+        ;mov byte [eax], 2
+        ;inc eax
+        ;mov byte [eax], 3
+        ;inc eax
+        ;mov byte [eax], 4
         
-        myMalloc eax
+end_test:
+        ;; open file and initialize state
+        ; open
+        mov eax, sys_open   ; system call number 
+        pop ebx             ; restore file name
+        mov ecx, read_only  ; file access
+        mov edx, permissions; set file permissions
+        int 0x80
+        ; eax holds the file-descriptor
+        
+        cmp eax, -1         ; if there is an error
+        je finito
+  
+        ;mov esi, eax       ; save fd
+        mov ebx, eax        ; fd
+        mov ecx, tmp_chr    ; read buffer
+        mov esi, [matrix_size] ; loop count
+        mov edx, 1          ; read one byte
+        
+        
+        
+read_loop:
+        
+        ; read
+        mov eax, sys_read   ; system call number
+        int 0x80
+        
+        ; put in state
+        cmp byte [tmp_chr], 32   ; dead cell
+        jne .is_alive
+            mov byte [state_+esi], 0
+            jmp .cont_loop
+.is_alive:
+            mov byte [state_+esi], 1
+.cont_loop:
+        dec esi             ; one less char to read
+        
+        cmp esi, 0
+        jne read_loop
+        
+read_file:
+        
+        
+
+
+        
         
         xor ebx, ebx            ; scheduler is co-routine 0 
         mov edx, scheduler
