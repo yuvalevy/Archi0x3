@@ -71,14 +71,14 @@ resume:                         ; "call resume" pushed return address
         ret                     ; jump to saved return address
         
 cell_function:
-    call cell
+    ;call cell
     mov ebx, 0
     ;find next state
-    push "next state"
-    call resume
+    ;push "next state"
+    ;call resume
     
-    pop "next state"
+    ;pop "next state"
     ; update 'state' array
-    mov ebx, 0
-    call resume
+    ;mov ebx, 0
+    ;call resume
     jmp cell_function

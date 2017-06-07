@@ -1,7 +1,7 @@
  
 
 ass3: clean printer.o coroutines.o scheduler.o ass3.o
-	ld -melf_i386 -g -o ass3 ass3.o printer.o coroutines.o scheduler.o
+	gcc -m32 -g -o ass3 ass3.o printer.o coroutines.o scheduler.o
 
 ass3.o: ass3.s
 	nasm -g -f elf -w+all -o ass3.o ass3.s

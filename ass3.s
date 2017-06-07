@@ -1,9 +1,9 @@
-        global _start
-        extern init_co, start_co, resume
-        extern scheduler, printer
+global main
+extern init_co, start_co, resume
+extern scheduler, printer
 
 
-        ;; /usr/include/asm/unistd_32.h
+;; /usr/include/asm/unistd_32.h
 sys_exit:       equ   1
 
 section .data
@@ -21,13 +21,20 @@ section .text
     align 16
    ; extern malloc 
 
-%macro get_number 2 ; gets a number from the stack
+%macro get_number 1 ; gets a number from the stack
+            
+    add ecx, 4      ; next string pointer
+    mov ebx, [ecx]  ; ebx hold the pointer to string
     
-    mov ebx, [ebp + 4*%2]       ; place in the stack
-    push ebx
-    mov ebx, make_number
-    call ebx
-    add esp ,4
+    push ecx
+        push ebx
+        
+            mov ebx, make_number
+            call ebx
+
+        add esp ,4
+    pop ecx
+
     mov dword [%1], eax         ; the label to update
     
 %endmacro
@@ -51,16 +58,16 @@ section .text
     pop ebp					; close malloc's frame
 %endmacro
 
-;main:
-_start:
+main:
         enter 0, 0
 
-        mov eax, [ebp+4]        ; argc
+        mov eax, 0
+        mov eax, [ebp+4*2]      ; argc
         
-        cmp eax, 7
+        cmp eax, 6
         je read_params          ; if -d doesn't exist
         
-        cmp eax, 8
+        cmp eax, 7
         je deal_with_d          ; if -d exist
         
         ; now argc < 5 || argc > 6,,,, error here
@@ -70,16 +77,17 @@ _start:
 deal_with_d:
         
 read_params:                       ;;; initialize parameters ;;;
-        mov eax, [ebp + 4*3]       ; "filename"
-        mov eax, [eax]
+        mov ecx, [ebp + 4*3]       ; char** argv
+        add ecx, 4
+        mov ebx, [ecx]             ; filename
         
         ;; open file and initialize state
-         
-        get_number length, 4       ; length
-        get_number width,  5       ; width
-        get_number t,      6       ; t
-        get_number k,      7       ; k
-       
+
+        get_number length       ; length
+        get_number width        ; width
+        get_number t            ; t
+        get_number k            ; k
+end_read:  
         mov eax, 0
         mov eax, [width]
         mul dword [length]
@@ -116,6 +124,7 @@ finito:        ;; exit
 make_number:
         push    ebp
         mov     ebp, esp        ; Entry code - set up ebp and esp
+        
         mov ecx, dword [ebp+8]  ; Get argument (pointer to string)
         mov eax, 0
         mov ebx, 0
