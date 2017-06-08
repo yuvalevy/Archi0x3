@@ -7,22 +7,21 @@ extern int WorldLength;
 
 int calc_actual_location(int,int);
 int calc_alive_neighbors(int,int);
+int valueAt(int,int);
 int isAlive(int,int);
-
+int min(int,int);
 /**
  * gets the cell's coordinate and return 0 if in the next turn the cell is dead and 1 otherwise
  */
 int cell(int x, int y) {
     
     int alive_neig = calc_alive_neighbors(x, y);
-    
-  /*  printf("our cell is %d\n", isAlive(x,y));
-    printf("our cell had %d brothers \n", alive_neig);*/
-    
+    int age = valueAt(x, y);
+
     if( isAlive(x,y) == 1 ) {
     /* cell is alive */
         if ( (2 == alive_neig) || (3 == alive_neig) ) {
-            return 1;   /* stays alive */
+            return min(age + 1, 9);   /* stays alive (max age = 9) */
         } else {
             return 0;   /* dies */
         }
@@ -48,14 +47,23 @@ int calc_actual_location(int x, int y) {
  */
 int isAlive(int x, int y) {
  
-    int actual = calc_actual_location(x,y);
-   /* printf("actual in cell [%d,%d]=%d  ",x,y,actual);*/
-    if( state_[actual] == 0) {
+    int age = valueAt(x,y);
+  
+    if( age == 0) {
        /* printf("dead\n\n");*/
         return 0;
     }
   /*  printf("alive\n\n");*/
     return 1;
+}
+
+/**
+ * returns current cell's value
+ */
+int valueAt(int x, int y) {
+ 
+    int actual = calc_actual_location(x,y);
+    return ((int) state_[actual]);
 }
 
 /**
@@ -74,17 +82,19 @@ int calc_alive_neighbors(int x, int y) {
         for (  ; j < 3 ; j++ ) {
            
             if( (i==1) && (j==1) ) { continue; } /* current cell ignored */
-            
-            
-           /** printf("ny = (%d + %d + %d) mod %d \n ", x,arr[i],WorldWidth,WorldWidth);
-            printf("ny = (%d + %d + %d) mod %d \n ", y,arr[j],WorldLength,WorldLength);*/
+
             ny = (y + arr[j] + WorldWidth) % WorldWidth;
-            /*printf("nieghbor [%d][%d]=[%d][%d] is %d\n" ,arr[i],arr[j],nx,ny,isAlive(nx,ny));*/
             count += isAlive(nx,ny);
         }
     }
     
     return count;
+}
+
+int min(int x, int y) {
+ 
+    if ( x>y ) return y;
+    return x;
 }
 
 /*
@@ -114,3 +124,21 @@ void test () {
     exit(1);
 }
 */
+
+void print() {
+    
+    int i=0,j=0;
+    int actual=0;
+    
+    printf("\n");
+    
+    for( i=0 ; i<WorldLength ; i++){
+        for( j=0 ; j<WorldWidth ; j++){
+                actual = calc_actual_location(i,j);
+                printf("%d ",state_[actual]);
+        }
+        printf("\n");
+    }
+    
+    /*exit(1);*/
+}

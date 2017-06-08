@@ -1,7 +1,10 @@
 ;;; This is a simplified co-routines implementation:
 ;;; CORS contains just stack tops, and we always work
 ;;; with co-routine indexes.
-        global init_co, start_co, end_co, resume
+global init_co, start_co, end_co, resume, cell_function
+extern state_
+extern print, cell
+extern WorldWidth, WorldLength, t, k
 
 
 maxcors:        equ 100*100+2         ; maximum number of co-routines
@@ -35,7 +38,30 @@ init_co:
 
         mov [tmp], esp          ; save caller's stack top
         mov esp, [cors + ebx*4] ; esp = co-routine's stack top
+        
+    .check_type:
 
+        cmp ebx, 1
+        jbe .not_cell ; jump if (ebx <= 1)
+        
+        ;dealing with cell's routine
+            push eax            ; push x
+            push ecx            ; push y
+            jmp .cont_push
+    
+    .not_cell:
+        
+        cmp ebx, 0
+        jne .cont_push ; jump if (ebx != 0)
+        
+        ;dealing with scheduler's routine
+            push WorldWidth
+            push WorldLength
+            push k
+            push t
+            ; mabye more!
+
+    .cont_push:
         push edx                ; save return address to co-routine stack
         pushf                   ; save flags
         pusha                   ; save all registers
@@ -70,15 +96,25 @@ resume:                         ; "call resume" pushed return address
         popf                    ; restore flags
         ret                     ; jump to saved return address
         
-cell_function:
-    ;call cell
-    mov ebx, 0
-    ;find next state
-    ;push "next state"
-    ;call resume
+cell_function:                  ; gets x,y of of the cell
     
-    ;pop "next state"
-    ; update 'state' array
-    ;mov ebx, 0
-    ;call resume
-    jmp cell_function
+        ; --------------- calculate stages
+        call cell
+        push eax                    ; saves cell's next position on co-routine stack
+        mov ebx, 0
+        call resume                 ; get back to schedualer
+        
+        ; --------------- update matrix 
+        pop edi                     ; pops the next position
+        
+        ; ebx = (x * WorldWidth) + y
+        mov eax, state_
+        add eax, ebx
+        
+        mov [eax], edi
+        
+        mov ebx, 0
+        call resume
+        
+        ; --------------- loop
+        jmp cell_function

@@ -1,9 +1,8 @@
 global main
-global WorldWidth
-global WorldLength
-global state_
+global WorldWidth, WorldLength, t, k, state_
 extern init_co, start_co, resume
-extern scheduler, printer, test, cell
+extern scheduler, printer
+extern print, cell_function
 
 
 ;; /usr/include/asm/unistd_32.h
@@ -18,19 +17,18 @@ section .data
         ten: dd 10
 section .bss
 
-; parameters:
+    ; parameters
 WorldLength:     resb    4
 WorldWidth:      resb    4
-matrix_size:     resb    4
 k:               resb    4
 t:               resb    4
 state_:          resb    102*102   ; the organisms state
-filename_ptr:    resb    4   ; file name pointer
+    ; helpers
 tmp_chr:         resb    1
+matrix_size:     resb    4
 
 section .text
     align 16
-    extern malloc 
 
 %macro get_number 1 ; gets a number from the stack
             
@@ -48,25 +46,6 @@ section .text
 
     mov dword [%1], eax         ; the label to update
     
-%endmacro
-
-%macro myMalloc 1			; returned address in eax
-	
-    push ebp				; open malloc's frame
-    mov ebp, esp
-    sub esp, 4				; Leave space for local var on stack
-    pushad				;allocate space for new node
-
-    push %1
-    call malloc
-    add esp, 4
-
-    mov [ebp-4], eax                ; Save returned value...
-    popad                           ; Restore caller state (registers)
-    mov eax, [ebp-4]                 ; place returned value where caller can see it
-    
-    add     esp, 4          ; Restore caller state
-    pop ebp					; close malloc's frame
 %endmacro
 
 main:
@@ -90,15 +69,15 @@ deal_with_d:
 read_params:                       ;;; initialize parameters ;;;
         mov ecx, [ebp + 4*3]       ; char** argv
         add ecx, 4
-        mov ebx, [ecx]      ; filename
+        mov ebx, [ecx]             ; filename
 
         push ebx                   ; save filename
         
         ; read all other parameters
-        get_number WorldLength       ; length
-        get_number WorldWidth        ; width
-        get_number t            ; t
-        get_number k            ; k
+        get_number WorldLength      ; length
+        get_number WorldWidth       ; width
+        get_number t                ; t
+        get_number k                ; k
         
               
         mov eax, 0
@@ -149,9 +128,9 @@ read_loop:
             jne read_loop
             
 start_program:
+        call print
         xor ebx, ebx            ; scheduler is co-routine 0 
         mov edx, scheduler
-        mov ecx, [ebp + 4]      ; ecx = argc
         call init_co            ; initialize scheduler state
 
         inc ebx                 ; printer i co-routine 1
@@ -159,13 +138,39 @@ start_program:
         call init_co            ; initialize printer state
  
  ; initialize all cell's co-routines
- ; create a func for the cell (put in edx)
+
+        mov eax, 0              ; x = 0 -> WorldLength-1
+
+x_loop:
+        mov ecx, 0              ; y = 0 -> WorldWidth-1
+    y_loop:
+            
+            mov edx, cell_function
+            call init_co        ; create co-routine
+            
+            inc ecx             ; inc y
+            
+            inc ecx
+            cmp ecx, [WorldWidth]  ;;... ecx is from 0 to WorldWidth-1.. but we want to compare it with WorldWidth so..
+            dec ecx
+            
+            jne y_loop
+            
+        inc eax                 ; inc x
+        
+        inc eax                         ;;... eax is from 0 to WorldLength-1.. but we want to compare it with WorldLength so..
+        cmp eax, [WorldLength]
+        dec eax
+        
+        jne x_loop
+    ;;; finish initialize co-routines
+ 
  
         xor ebx, ebx            ; starting co-routine = scheduler
         call start_co           ; start co-routines
 
 
-finito:        ;; exit
+finito:                         ; exit
         mov eax, sys_exit
         xor ebx, ebx
         int 80h
