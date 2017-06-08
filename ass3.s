@@ -129,7 +129,7 @@ end_test:
         ;mov esi, eax       ; save fd
         mov ebx, eax        ; fd
         mov ecx, tmp_chr    ; read buffer
-        mov esi, [matrix_size] ; loop count
+        mov esi, 0          ; loop count
         mov edx, 1          ; read one byte
         
         
@@ -141,16 +141,21 @@ read_loop:
         int 0x80
         
         ; put in state
-        cmp byte [tmp_chr], 32   ; dead cell
+.is_dead:
+        cmp byte [tmp_chr], 32   ; dead cell (space)
         jne .is_alive
             mov byte [state_+esi], 0
+            inc esi             ; one less char to read
             jmp .cont_loop
 .is_alive:
+        cmp byte [tmp_chr], 49   ; alive cell (one)
+        jne .cont_loop
             mov byte [state_+esi], 1
+            inc esi             ; one less char to read
+
 .cont_loop:
-        dec esi             ; one less char to read
         
-        cmp esi, 0
+        cmp esi, [matrix_size]
         jne read_loop
         
 read_file:
