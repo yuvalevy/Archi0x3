@@ -1,6 +1,9 @@
 global main
+global WorldWidth
+global WorldLength
+global state_
 extern init_co, start_co, resume
-extern scheduler, printer
+extern scheduler, printer, test, cell
 
 
 ;; /usr/include/asm/unistd_32.h
@@ -16,14 +19,14 @@ section .data
 section .bss
 
 ; parameters:
-length:     resb    4
-width:      resb    4
-matrix_size:resb    4
-k:          resb    4
-t:          resb    4
-state_:      resb    102*102   ; the organisms state
-filename_ptr:resb   4   ; file name pointer
-tmp_chr:    resb    1
+WorldLength:     resb    4
+WorldWidth:      resb    4
+matrix_size:     resb    4
+k:               resb    4
+t:               resb    4
+state_:          resb    102*102   ; the organisms state
+filename_ptr:    resb    4   ; file name pointer
+tmp_chr:         resb    1
 
 section .text
     align 16
@@ -92,28 +95,18 @@ read_params:                       ;;; initialize parameters ;;;
         push ebx                   ; save filename
         
         ; read all other parameters
-        get_number length       ; length
-        get_number width        ; width
+        get_number WorldLength       ; length
+        get_number WorldWidth        ; width
         get_number t            ; t
         get_number k            ; k
         
               
         mov eax, 0
-        mov eax, [width]
-        mul dword [length]      ; eax hold the 'state' actual size
+        mov eax, [WorldWidth]
+        mul dword [WorldLength]      ; eax hold the 'state' actual size
         mov [matrix_size], eax
-end_read:
+read_file:
 
-        ;mov eax, state_
-        ;mov byte [eax], 1
-        ;inc eax
-        ;mov byte [eax], 2
-        ;inc eax
-        ;mov byte [eax], 3
-        ;inc eax
-        ;mov byte [eax], 4
-        
-end_test:
         ;; open file and initialize state
         ; open
         mov eax, sys_open   ; system call number 
@@ -126,14 +119,10 @@ end_test:
         cmp eax, -1         ; if there is an error
         je finito
   
-        ;mov esi, eax       ; save fd
-        mov ebx, eax        ; fd
+        mov ebx, eax        ; save fd
         mov ecx, tmp_chr    ; read buffer
-        mov esi, 0          ; loop count
+        mov esi, 0          ; loop count (until esi = [matrix_size])
         mov edx, 1          ; read one byte
-        
-        
-        
 read_loop:
         
         ; read
@@ -141,30 +130,25 @@ read_loop:
         int 0x80
         
         ; put in state
-.is_dead:
-        cmp byte [tmp_chr], 32   ; dead cell (space)
-        jne .is_alive
-            mov byte [state_+esi], 0
-            inc esi             ; one less char to read
-            jmp .cont_loop
-.is_alive:
-        cmp byte [tmp_chr], 49   ; alive cell (one)
-        jne .cont_loop
-            mov byte [state_+esi], 1
-            inc esi             ; one less char to read
+        .is_dead:
+                cmp byte [tmp_chr], 32   ; dead cell (space)
+                jne .is_alive
+                    mov byte [state_+esi], 0
+                    inc esi             ; one less char to read
+                    jmp .cont_loop
 
-.cont_loop:
-        
-        cmp esi, [matrix_size]
-        jne read_loop
-        
-read_file:
-        
-        
+        .is_alive:
+                cmp byte [tmp_chr], 49   ; alive cell (one)
+                jne .cont_loop
+                    mov byte [state_+esi], 1
+                    inc esi             ; one less char to read
 
-
-        
-        
+    .cont_loop:
+            
+            cmp esi, [matrix_size]
+            jne read_loop
+            
+start_program:
         xor ebx, ebx            ; scheduler is co-routine 0 
         mov edx, scheduler
         mov ecx, [ebp + 4]      ; ecx = argc
@@ -174,7 +158,7 @@ read_file:
         mov edx, printer
         call init_co            ; initialize printer state
  
- ;initialize all cell's co-routines
+ ; initialize all cell's co-routines
  ; create a func for the cell (put in edx)
  
         xor ebx, ebx            ; starting co-routine = scheduler
