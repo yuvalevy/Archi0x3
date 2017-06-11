@@ -17,21 +17,20 @@ int cell(int x, int y) {
     
     int alive_neig = calc_alive_neighbors(x, y);
     int age = valueAt(x, y);
-
+	int result = 0;
+	
     if( isAlive(x,y) == 1 ) {
     /* cell is alive */
         if ( (2 == alive_neig) || (3 == alive_neig) ) {
-            return min(age + 1, 9);   /* stays alive (max age = 9) */
-        } else {
-            return 0;   /* dies */
+            result = min(age + 1, 9);   /* stays alive (max age = 9) */
         }
-    } 
-    /* cell is dead */
-    if ( 3 == alive_neig ) {
-        return 1;   /* born */
-    } else {
-        return 0;   /* stays dead */
-    }
+    } else { /* cell is dead */
+		if ( 3 == alive_neig ) {
+			result = 1;   /* born */
+		}
+	}
+	
+	return ( result + '0') ;
 }
 
 /**
@@ -50,10 +49,8 @@ int isAlive(int x, int y) {
     int age = valueAt(x,y);
   
     if( age == 0) {
-       /* printf("dead\n\n");*/
         return 0;
     }
-  /*  printf("alive\n\n");*/
     return 1;
 }
 
@@ -62,8 +59,9 @@ int isAlive(int x, int y) {
  */
 int valueAt(int x, int y) {
  
-    int actual = calc_actual_location(x,y);
-    return ((int) state_[actual]);
+    char actual = calc_actual_location(x,y);
+	int ac = actual - '0';
+    return ((int) state_[ac]);
 }
 
 /**
@@ -125,7 +123,7 @@ void test () {
 }
 */
 
-void print() {
+/*void print() {
     
     int i=0,j=0;
     int actual=0;
@@ -140,5 +138,5 @@ void print() {
         printf("\n");
     }
     
-    /*exit(1);*/
-}
+    exit(1);
+}*/

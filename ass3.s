@@ -1,8 +1,8 @@
 global main
-global WorldWidth, WorldLength, t, k, state_
+global WorldWidth, WorldLength, t, k, matrix_size, state_
 extern init_co, start_co, resume
 extern scheduler, printer
-extern print, cell_function
+extern cell_function
 
 
 ;; /usr/include/asm/unistd_32.h
@@ -112,14 +112,14 @@ read_loop:
         .is_dead:
                 cmp byte [tmp_chr], 32   ; dead cell (space)
                 jne .is_alive
-                    mov byte [state_+esi], 0
+                    mov byte [state_+esi], '0'
                     inc esi             ; one less char to read
                     jmp .cont_loop
 
         .is_alive:
                 cmp byte [tmp_chr], 49   ; alive cell (one)
                 jne .cont_loop
-                    mov byte [state_+esi], 1
+                    mov byte [state_+esi], '1'
                     inc esi             ; one less char to read
 
     .cont_loop:
@@ -128,7 +128,7 @@ read_loop:
             jne read_loop
             
 start_program:
-        call print
+        ;call print
         xor ebx, ebx            ; scheduler is co-routine 0 
         mov edx, scheduler
         call init_co            ; initialize scheduler state
@@ -138,7 +138,7 @@ start_program:
         call init_co            ; initialize printer state
  
  ; initialize all cell's co-routines
-
+		inc ebx
         mov eax, 0              ; x = 0 -> WorldLength-1
 
 x_loop:
@@ -148,19 +148,19 @@ x_loop:
             mov edx, cell_function
             call init_co        ; create co-routine
             
+			inc ebx
             inc ecx             ; inc y
             
-            inc ecx
-            cmp ecx, [WorldWidth]  ;;... ecx is from 0 to WorldWidth-1.. but we want to compare it with WorldWidth so..
-            dec ecx
-            
+            mov esi, [WorldWidth]
+			dec esi
+            cmp ecx, esi
             jne y_loop
             
         inc eax                 ; inc x
         
-        inc eax                         ;;... eax is from 0 to WorldLength-1.. but we want to compare it with WorldLength so..
-        cmp eax, [WorldLength]
-        dec eax
+		mov esi, [WorldLength]
+		dec esi
+        cmp eax, esi
         
         jne x_loop
     ;;; finish initialize co-routines
