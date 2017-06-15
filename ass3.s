@@ -144,7 +144,6 @@ start_program:
 x_loop:
         mov ecx, 0              ; y = 0 -> WorldWidth-1
     y_loop:
-            
             mov edx, cell_function
             call init_co        ; create co-routine
             
@@ -152,14 +151,12 @@ x_loop:
             inc ecx             ; inc y
             
             mov esi, [WorldWidth]
-            dec esi
             cmp ecx, esi
             jne y_loop
             
         inc eax                 ; inc x
         
 		mov esi, [WorldLength]
-		dec esi
         cmp eax, esi
         
         jne x_loop

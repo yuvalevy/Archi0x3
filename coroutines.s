@@ -4,7 +4,7 @@
 global init_co, start_co, end_co, resume, cell_function
 extern state_
 extern print, cell
-extern WorldWidth, WorldLength, t, k
+extern WorldWidth, WorldLength, t, k, first_time
 
 
 maxcors:        equ 100*100+2         ; maximum number of co-routines
@@ -45,8 +45,9 @@ init_co:
         jbe .not_cell ; jump if (ebx <= 1)
         
         ;dealing with cell's routine
-            push eax            ; push x
             push ecx            ; push y
+            push eax            ; push x
+
             jmp .cont_push
     
     .not_cell:
@@ -59,6 +60,7 @@ init_co:
             push WorldLength
             push k
             push t
+            mov byte [first_time], 0
             ; mabye more!
 
     .cont_push:
@@ -106,7 +108,7 @@ cell_function:                  ; gets x,y of of the cell
         
         ; --------------- update matrix 
         pop edi                     ; pops the next position
-        
+
         ; ebx = (x * WorldWidth) + y
         mov eax, state_
         add eax, ebx
