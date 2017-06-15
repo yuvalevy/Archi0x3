@@ -16,7 +16,7 @@ printer.o: printer.s
 	nasm -g -f elf -w+all -o printer.o printer.s
 
 cell.o: cell.c
-	gcc -m32 -g -Wall -ansi -c -o cell.o cell.c
+	gcc -m32 -Wall -ansi -c -o cell.o cell.c
 
 clean:
 	rm -f *.o ass3

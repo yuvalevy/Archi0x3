@@ -47,7 +47,7 @@ init_co:
         ;dealing with cell's routine
             push ecx            ; push y
             push eax            ; push x
-
+            push ebx
             jmp .cont_push
     
     .not_cell:
@@ -61,7 +61,6 @@ init_co:
             push k
             push t
             mov byte [first_time], 0
-            ; mabye more!
 
     .cont_push:
         push edx                ; save return address to co-routine stack
@@ -101,19 +100,28 @@ resume:                         ; "call resume" pushed return address
 cell_function:                  ; gets x,y of of the cell
     
         ; --------------- calculate stages
+        
+        pop ebx
+ 
         call cell
         push eax                    ; saves cell's next position on co-routine stack
+        push ebx
+
         mov ebx, 0
         call resume                 ; get back to schedualer
         
         ; --------------- update matrix 
-        pop edi                     ; pops the next position
+        pop ebx
+        pop edx                     ; pops the next position
 
-        ; ebx = (x * WorldWidth) + y
+        ; ebx = (x * WorldWidth) + y +2
+
         mov eax, state_
         add eax, ebx
+        sub eax, 2
+        mov byte [eax], dl
         
-        mov [eax], edi
+        push ebx
         
         mov ebx, 0
         call resume

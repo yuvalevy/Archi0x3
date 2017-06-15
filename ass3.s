@@ -19,10 +19,14 @@ section .bss
 
     ; parameters
 WorldLength:     resb    4
+casdcad: resb 1000
 WorldWidth:      resb    4
+casdcad2: resb 1000
 k:               resb    4
+casdcad3: resb 1000
 t:               resb    4
-state_:          resb    102*102   ; the organisms state
+casdcad4: resb 1000
+state_:          resb    102*102*2   ; the organisms state
     ; helpers
 tmp_chr:         resb    1
 matrix_size:     resb    4
@@ -128,7 +132,6 @@ read_loop:
             jne read_loop
             
 start_program:
-        ;call print
         xor ebx, ebx            ; scheduler is co-routine 0 
         mov edx, scheduler
         call init_co            ; initialize scheduler state
@@ -199,8 +202,3 @@ make_number_end:
         mov     esp, ebp        ; Function exit code
         pop     ebp
         ret
-
-
-
-
-
