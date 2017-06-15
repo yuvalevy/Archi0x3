@@ -1,5 +1,5 @@
 global printer
-extern resume, state_, WorldWidth, WorldLength, matrix_size, print
+extern resume, state, WorldWidth, WorldLength, matrix_size
 ;; /usr/include/asm/unistd_32.h
 sys_write:      equ   4
 stdout:         equ   1
@@ -9,7 +9,7 @@ newline:  db 10
 
 section .text
 
-%macro print_ 2
+%macro print 2
         mov eax, sys_write
         mov ebx, stdout
         mov ecx, %1
@@ -25,24 +25,24 @@ printer:
             
                     mov eax, [WorldWidth]
                     mul esi					; esi = counter*WorldWidth
-                    mov ecx, state_
-                    add ecx, eax			; ecx = counter*WorldWidth + state_
+                    mov ecx, state
+                    add ecx, eax			; ecx = counter*WorldWidth + state
                     add ecx, edi
                     
-                    print_ ecx, 1
+                    print ecx, 1
 
                     inc edi
                     mov eax, [WorldWidth]
                     cmp eax, edi			; ==? WorldWidth
                     jne .inner_loop
                     
-            print_ newline, 1
+            print newline, 1
             
             inc esi
             mov edi, [WorldLength]
             cmp esi, edi
             jne .loop
-        print_ newline, 1
+        print newline, 1
     
     xor ebx, ebx
     call resume             ; resume scheduler

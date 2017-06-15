@@ -1,17 +1,26 @@
 global main
-global WorldWidth, WorldLength, t, k, matrix_size, state_
+global WorldWidth, WorldLength, t, k, matrix_size, state
 extern init_co, start_co, resume
 extern scheduler, printer
 extern cell_function
 
 
 ;; /usr/include/asm/unistd_32.h
+sys_write:      equ   4
+stdout:         equ   1
 sys_exit:       equ   1
 sys_open:       equ   5
 sys_read:       equ   3
 read_only:      equ   0
 permissions:    equ   777
 
+section .rodata
+args_error: db "Worng number of parametes",10,0
+p_length:   db "length=",0
+p_width:    db "width=",0
+p_gen:      db "number of generations=",0
+p_fre:      db "print frequency=",0
+new_line:   db 10   ,0
 
 section .data
         ten: dd 10
@@ -20,30 +29,51 @@ section .bss
     ; parameters
 WorldLength:     resb    4
 casdcad: resb 1000
+what_to_print:   resb    10
+
 WorldWidth:      resb    4
 casdcad2: resb 1000
 k:               resb    4
 casdcad3: resb 1000
 t:               resb    4
 casdcad4: resb 1000
-state_:          resb    102*102*2   ; the organisms state
+state:          resb    102*102*2   ; the organisms state
     ; helpers
 tmp_chr:         resb    1
 matrix_size:     resb    4
+debug:           resb    1
 
 section .text
     align 16
 
-%macro get_number 1 ; gets a number from the stack
+%macro print 2
+        mov eax, sys_write
+        mov ebx, stdout
+        mov ecx, %1
+        mov edx, %2
+        int 80h
+%endmacro
+
+%macro get_number 3 ; gets a number from the stack
             
     add ecx, 4      ; next string pointer
     mov ebx, [ecx]  ; ebx hold the pointer to string
+    mov [what_to_print], ebx
     
     push ecx
         push ebx
-        
-            mov ebx, make_number
-            call ebx
+    
+            cmp byte [debug], 1
+            jne %%skip
+            
+            print %2,%3
+
+            mov ecx, [what_to_print]
+            print ecx, 1
+            print new_line, 1
+            %%skip:
+                    mov ebx, make_number
+                    call ebx
 
         add esp ,4
     pop ecx
@@ -55,6 +85,7 @@ section .text
 main:
         enter 0, 0
 
+        mov byte [debug], 0
         mov eax, 0
         mov eax, [ebp+4*2]      ; argc
         
@@ -65,24 +96,32 @@ main:
         je deal_with_d          ; if -d exist
         
         ; now argc < 5 || argc > 6,,,, error here
+   
+        print args_error, 27
         
-        ;jmp finito
+        jmp finito
         
 deal_with_d:
+
+        mov byte [debug], 1             
         
 read_params:                       ;;; initialize parameters ;;;
         mov ecx, [ebp + 4*3]       ; char** argv
         add ecx, 4
-        mov ebx, [ecx]             ; filename
+        
+        cmp byte [debug], 1
+        jne .cont
+        add ecx, 4
 
+        .cont:
+        mov ebx, [ecx]             ; filename
         push ebx                   ; save filename
         
         ; read all other parameters
-        get_number WorldLength      ; length
-        get_number WorldWidth       ; width
-        get_number t                ; t
-        get_number k                ; k
-        
+        get_number WorldLength, p_length, 7      ; length
+        get_number WorldWidth, p_width, 6       ; width
+        get_number t, p_gen, 22                ; t
+        get_number k, p_fre, 16                ; k
               
         mov eax, 0
         mov eax, [WorldWidth]
@@ -116,21 +155,21 @@ read_loop:
         .is_dead:
                 cmp byte [tmp_chr], 32   ; dead cell (space)
                 jne .is_alive
-                    mov byte [state_+esi], '0'
+                    mov byte [state+esi], '0'
                     inc esi             ; one less char to read
                     jmp .cont_loop
 
         .is_alive:
                 cmp byte [tmp_chr], 49   ; alive cell (one)
                 jne .cont_loop
-                    mov byte [state_+esi], '1'
+                    mov byte [state+esi], '1'
                     inc esi             ; one less char to read
 
     .cont_loop:
             
             cmp esi, [matrix_size]
             jne read_loop
-            
+           
 start_program:
         xor ebx, ebx            ; scheduler is co-routine 0 
         mov edx, scheduler
@@ -174,11 +213,6 @@ finito:                         ; exit
         mov eax, sys_exit
         xor ebx, ebx
         int 80h
-        
-        
-        
-;;;;;;;;;;;;;; change it 
-
 
 ;; gets string and converts to a number
 make_number:

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-extern char state_[];
+extern char state[];
 extern int WorldWidth;
 extern int WorldLength;
 
@@ -64,7 +64,7 @@ int isAlive(int x, int y) {
 int valueAt(int x, int y) {
  
     int actual = calc_actual_location(x,y);
-    char ac = state_[actual] - '0';
+    char ac = state[actual] - '0';
     return ( ((int)ac));
 }
 

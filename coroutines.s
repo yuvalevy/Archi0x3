@@ -2,7 +2,7 @@
 ;;; CORS contains just stack tops, and we always work
 ;;; with co-routine indexes.
 global init_co, start_co, end_co, resume, cell_function
-extern state_
+extern state
 extern print, cell
 extern WorldWidth, WorldLength, t, k, first_time
 
@@ -116,7 +116,7 @@ cell_function:                  ; gets x,y of of the cell
 
         ; ebx = (x * WorldWidth) + y +2
 
-        mov eax, state_
+        mov eax, state
         add eax, ebx
         sub eax, 2
         mov byte [eax], dl

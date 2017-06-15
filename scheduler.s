@@ -67,4 +67,6 @@ cmp byte [first_time], 0
     cmp ebx, [generation_counter]
     jne .next
     
+    mov ebx, 1
+    call resume
     call end_co             ; stop co-routines  
