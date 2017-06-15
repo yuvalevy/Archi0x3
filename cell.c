@@ -20,7 +20,7 @@ int cell(int x, int y) {
 	int result = 0;
 	
     if( isAlive(x,y) == 1 ) {
-    /* cell is alive */
+		/* cell is alive */
         if ( (2 == alive_neig) || (3 == alive_neig) ) {
             result = min(age + 1, 9);   /* stays alive (max age = 9) */
         }

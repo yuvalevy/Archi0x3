@@ -148,11 +148,11 @@ x_loop:
             mov edx, cell_function
             call init_co        ; create co-routine
             
-			inc ebx
+            inc ebx
             inc ecx             ; inc y
             
             mov esi, [WorldWidth]
-			dec esi
+            dec esi
             cmp ecx, esi
             jne y_loop
             

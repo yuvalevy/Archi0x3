@@ -11,9 +11,9 @@ ender:  db '-----', 10
 section .text
 
 %macro print 2
-		mov eax, sys_write
+        mov eax, sys_write
         mov ebx, stdout
-		mov ecx, %1
+        mov ecx, %1
         mov edx, %2
         int 80h
 %endmacro
@@ -30,7 +30,7 @@ printer:
 			mov ecx, state_
 			add ecx, eax			; ecx = counter*WorldWidth + state_
 			add ecx, edi
-		
+                        
 			print ecx, 1
 
 			inc edi
@@ -42,10 +42,11 @@ printer:
 		
 		inc esi
 		mov edi, [WorldLength]
-		dec edi
 		cmp esi, edi
 		jne .loop
-				
+	print ender, 5
+				print newline, 1
+	
         xor ebx, ebx
         call resume             ; resume scheduler
 
