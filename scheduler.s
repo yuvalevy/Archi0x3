@@ -1,6 +1,6 @@
 global scheduler, first_time
 extern resume, end_co
-extern matrix_size, t, k
+extern matrix_size, t, k, debug
 
 section .bss
 
@@ -22,13 +22,19 @@ section .text
 
 scheduler:
 
+
 cmp byte [first_time], 0
     jne .next
         mov byte  [first_time], 1
         mov dword [cell_counter], 0
         mov dword [printing_counter], 0
         mov dword [generation_counter], 0
-            
+
+        cmp byte [debug], 1
+        jne .next
+
+        mov ebx, 1 
+        call resume
 .next:
 
     ; check if printing is needed

@@ -42,7 +42,7 @@ printer:
             mov edi, [WorldLength]
             cmp esi, edi
             jne .loop
-        print newline, 1
+;        print newline, 1
     
     xor ebx, ebx
     call resume             ; resume scheduler

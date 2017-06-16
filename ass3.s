@@ -1,4 +1,4 @@
-global main
+global main, debug
 global WorldWidth, WorldLength, t, k, matrix_size, state
 extern init_co, start_co, resume
 extern scheduler, printer
@@ -169,7 +169,7 @@ read_loop:
             
             cmp esi, [matrix_size]
             jne read_loop
-           
+        
 start_program:
         xor ebx, ebx            ; scheduler is co-routine 0 
         mov edx, scheduler
